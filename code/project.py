@@ -1,19 +1,29 @@
-from csvr import read_csv
-from name import get_name_mode
-from file import get_file
-from clean import clean_file
+from csv_reader import read_csv
+from file import get_file, clean_file
 from typing import TextIO, BinaryIO
 import sys
 
 
 def main() -> None:
-    output, mode = get_name_mode()
-    file_init = get_file(mode)
+    output, mode = get_info()
+    input = get_file(mode)
     if mode == 'asm':
-        convert2asm(file_init, output)
+        convert2asm(input, output)
     else:
-        convert2bin(file_init, output)
-    ending(file_init)
+        convert2bin(input, output)
+    input.close()
+    print('Process complete!')
+    retry()
+
+
+def get_info() -> tuple[str, str]:
+    name = "../data/" + input('Name of resulting file: ')
+    name = name.strip()
+    if name.endswith(('.asm', '.s', '.bin')):
+        return name, name.split('.')[-1]
+    else:
+        print('Invalid file extension, needed .asm/.s/.bin')
+        return get_info()
 
 
 def convert2asm(initial: TextIO|BinaryIO, final: str) -> None:
@@ -42,7 +52,7 @@ def convert2asm(initial: TextIO|BinaryIO, final: str) -> None:
             rs1 = f'x{int(rs1, base = 2)}'
             rs2 = f'x{int(rs2, base = 2)}'
 
-            instruction_dict_op, instruction_dict_full = read_csv('insts.csv', 'asm')
+            instruction_dict_op, instruction_dict_full = read_csv('../data/insts.csv', 'asm')
             inst_type = instruction_dict_op[opcode]
             identifier = opcode + funct3 + funct7
 
@@ -159,12 +169,6 @@ def get_int(num: str) -> int:
     else:
         imm = int(num)
     return imm
-
-
-def ending(file) -> None:
-    file.close()
-    print('Process complete!')
-    retry()
 
 
 def retry() -> None:
